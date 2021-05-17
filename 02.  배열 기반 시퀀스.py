@@ -11,6 +11,8 @@ class DynamicArray:
   def append(self, obj):  # 데이터 추가  
   def remove(self, value):  # 데이터 삭제    
   def insert(self, k, value): # 데이터 삽입
+  def reverse(self): # 데이터 순서 뒤집기
+  def extend(self, data2): # 데이터 
 """
 
 
@@ -66,7 +68,7 @@ class DynamicArray: # 클래스 선언
         return # exit immediately
     raise ValueError('value not found') # only reached if no match
     
- def insert(self, k, value):  # 데이터 삽입
+  def insert(self, k, value):  # 데이터 삽입
     """Insert value at index k, shifting subsequent values rightward."""
     # (for simplicity, we assume 0 <= k <= n in this verion)
     if self._n == self._capacity: # not enough room
@@ -76,9 +78,31 @@ class DynamicArray: # 클래스 선언
     self._A[k] = value # store newest element
     self._n += 1
     
-  def reverse(self):
+  def reverse(self):  # 데이터 순서 뒤집기
+    if self._n == 0:
+      raise IndexError('invalid index')
+     
+    start = 0
+    end = self._n -1
+    while start < end:
+      self._A[start], self._A[end] = self._A[end], self._A[start]
+      start += 1
+      end -= 1
     
-    
+  def extend(self, data2):
+    for i in range(data2._n):
+      if self._n == self._capacity:
+        self._resize(2 * self._capacity) # resize를 loop 밖에서 한번만 실행되도록 수정
+      self._A[self._n] = data2[i]
+      self._n += 1
+"""
+  def extend(self, data2):
+      for i in range(data2._n):
+        self._A[self._n] = data2[i]
+        self._n += 1
+      self._resize(2 * self._capacity)
+"""
+      
 # append 성능분석
 # Python의 append 구현이 amortized 𝚶(𝟏)인지 확인해보자!
 
