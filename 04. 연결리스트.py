@@ -297,3 +297,142 @@ class _Node:
     if self._size > 0:
       self._tail = self._tail._next # old head becomes new tail
   
+  
+  
+### 양방향 연결리스트 ###
+
+
+  
+class _Node:
+  """Lightweight, nonpublic class for storing a doubly linked node."""
+  __slots__ = '_element', '_prev', '_next' # streamline memory
+  
+  def __init__(self, element, prev, next): # initialize node's fields
+    self._element = element # user's element
+    self._prev = prev # previous node reference
+    self._next = next # next node reference
+    
+class _DoublyLinkedBase:
+  """A base class providing a doubly linked list representation."""
+  
+  def __init__(self):
+    """Create an empty list."""
+    self._header = self._Node(None, None, None)
+    self._trailer = self._Node(None, None, None)
+    self._header._next = self._trailer # trailer is after header
+    self._trailer._prev = self._header # header is before trailer
+    self._size = 0 # number of elements
+    
+  def __len__(self):
+    """Return the number of elements in the list."""
+    return self._size
+  
+  def is_empty(self):
+    """Return True if list is_empty."""
+    return self._size == 0
+  
+  def _insert_between(self, e, predecessor, successor):
+    """Add element e between two existing nodes and return new node."""
+    newest = self._Node(e, predecessor, successor) # linked to neighbors
+    predecessor._next = newest
+    successor._prev = newest
+    self._size += 1
+    return newest
+  
+  def _delete_node(self, node):
+    """Delete nonsentinel node from the list and return its element."""
+    predecessor = node._prev
+    successor = node._next
+    predecessor._next = successor
+    successor._prev = predecessor
+    self._size -= 1
+    element = node._element # record deleted element
+    node._prev = node._next = node._element = None # deprecate node
+    return element # return deleted element
+  
+  
+### 연결 덱 ###
+
+from .doubly_linked_base import _DoublyLinkedBase
+class Empty(Exception):
+  """Error attempting to access an element from an empty container."""
+  pass
+
+class LinkedDeque(_DoublyLinkedBase): # note the use of inheritance
+  """Double-ended queue implementation based on a doubly linked list."""
+  
+  def first(self):
+    """Return (but do not remove) the element at the front of the deque.
+    Raise Empty exception if the deque is_empty.
+    """
+    if self.is_empty():
+      raise Empty("Deque is_empty")
+    return self._header._next._element # real item just after header
+  
+  def last(self):
+    """Return (but do not remove) the element at the back of the deque.
+    Raise Empty exception if the deque is_empty.
+    """
+    if self.is_empty():
+      raise Empty("Deque is_empty")
+    return self._trailer._prev._element # real item just before trailer
+  
+  def insert_first(self, e):
+    """Add an element to the front of the deque."""
+    self._insert_between(e, self._header, self._header._next) # after header
+    
+  def insert_last(self, e):
+    """Add an element to the back of the deque."""
+    self._insert_between(e, self._trailer._prev, self._trailer) # before trailer
+    
+  def delete_first(self):
+    """Remove and return the element from the front of the deque.
+    Raise Empty exception if the deque is_empty.
+    """
+    if self.is_empty():
+      raise Empty("Deque is_empty")
+    return self._delete_node(self._header._next) # use inherited method
+  
+  def delete_last(self):
+    """Remove and return the element from the back of the deque.
+    Raise Empty exception if the deque is_empty.
+    """
+    if self.is_empty():
+      raise Empty("Deque is_empty")
+    return self._delete_node(self._trailer._prev) # use inherited method
+  
+  
+  
+  ### 원형 양방향 연결 덱 ###
+  
+class _Node:
+  """Lightweight, nonpublic class for storing a doubly linked node."""
+  __slots__ = '_element', '_prev', '_next' # streamline memory
+  
+  def __init__(self, element, prev, next): # initialize node's fields
+    self._element = element # user's element
+    self._prev = prev # previous node reference
+    self._next = next # next node reference
+    
+  def __str__(self): # modified
+    return str(self._element) # modified
+  
+class _CircularDoublyLinkedBase:
+  """A base class providing a doubly linked list representation."""
+  
+  def __init__(self):
+    """Create an empty list."""
+    self._header = self._Node(None, None, None)
+    self._header._next = self._header # modified
+    self._header._prev = self._header # modified
+    self._size = 0 # number of elements
+    
+  def __iter__(self): # generator 정의
+    v = self._header._next
+    while v != self._header:
+      yield v
+      assert isinstance(v._next, object)
+      v = v._next
+      
+  def __str__(self): # 연결 리스트의 값을 print 출력
+    return " -> ".join(str(v) for v in self)
