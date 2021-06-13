@@ -255,3 +255,60 @@ class TreeMap(LinkedBinaryTree, MapBase):
       parent._right = child
     if child is not None: # make child point to parent
       child._parent = parent
+      
+  def _rotate(self, p):
+    """Rotate Position p above its parent."""
+    x = p._node
+    y = x._parent # we assume this exists
+    z = y._parent # grandparent (possibly None)
+    if z is None:
+      self._root = x # x becomes root
+      x._parent = None
+    else:
+      self._relink(z, x, y == z._left) # x becomes a direct child of z
+    # now rotate x and y, including transfer of middle subtree
+    if x == y._left:
+      self._relink(y, x._right, True) # x._right becomes left child of y
+      self._relink(x, y, False) # y becomes right child of x
+    else:
+      self._relink(y, x._left, False) # x._left becomes right child of y
+      self._relink(x, y, True) # y becomes left child of x
+      
+  def _restructure(self, x):
+    """Perform trinode restructure of Position x with parent/grandparent."""
+    y = self.parent(x)
+    z = self.parent(y)
+    if (x == self.right(y)) == (y == self.right(z)): # matching alignments
+      self._rotate(y) # single rotation (of y)
+      return y # y is new subtree root
+    else: # opposite alignments
+      self._rotate(x) # double rotation (of x)
+      self._rotate(x)
+      return x # x is new subtree root
+    
+
+### 리밸런싱 ###
+    
+  def _rebalance_insert(self, p):
+    """Call to indicate that position p is newly added."""
+    pass
+
+  def _rebalance_delete(self, p):
+    """Call to indicate that a child of p has been removed."""
+    pass
+
+  def _rebalance_access(self, p):
+    """Call to indicate that position p was recently accessed."""
+    pass
+
+class RedBlackTreeMap(TreeMap):
+  
+  class _Node(TreeMap._Node):
+    __slots__ = '_red' # add additional data member to the Node class
+    
+    def __init__(self, element, parent=None, left=None, right=None):
+      super().__init__(element, parent, left, right)
+      self._red = True # new node red by default
+      
+      
+      
