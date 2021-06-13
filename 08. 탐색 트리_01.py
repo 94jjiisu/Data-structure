@@ -243,3 +243,15 @@ class TreeMap(LinkedBinaryTree, MapBase):
     
 
 ### 균형 탐색 트리 ###
+
+### 균형 이진 탐색 트리를 위한 메소드들 ###
+### TreeMap 클래스 ###
+
+  def _relink(self, parent, child, make_left_child):
+    """Relink parent node with child node (we allow child to be None)."""
+    if make_left_child: # make it a left child
+      parent._left = child
+    else: # make it a right child
+      parent._right = child
+    if child is not None: # make child point to parent
+      child._parent = parent
