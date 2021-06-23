@@ -78,3 +78,82 @@ def BFS(g, s, discovered):
           discovered[v] = e # e is the tree edge that discovered v
           next_level.append(v) # v will be further considered in next pass
     level = next_level # relabel 'next' level to become current
+
+    
+    
+    
+    
+    
+### 최단 경로 ###
+
+### 다익스트라 알고리즘 ###
+
+from ..ch09.adaptable_heap_priority_queue import AdaptableHeapPriorityQueue
+
+def shortest_path_lengths(g, src):
+  """Compute shortest-path distances from src to reachable vertices of g.
+  Graph g can be undirected or directed, but must be weighted such that
+  e.element() returns a numeric weight for each edge e.
+  Return dictionary mapping each reachable vertex to its distance from src.
+  """
+  d = {} # d[v] is upper bound from s to v
+  cloud = {} # map reachable v to its d[v] value
+  pq = AdaptableHeapPriorityQueue() # vertex v will have key d[v]
+  pqlocator = {} # map from vertex to its pq locator
+  
+  # for each vertex v of the graph, add an entry to the priority queue, with
+  # the source having distance 0 and all others having infinite distance
+  for v in g.vertices():
+    if v is src:
+      d[v] = 0
+    else:
+      d[v] = float('inf') # syntax for positive infinity
+    pqlocator[v] = pq.add(d[v], v) # save locator for future updates
+    
+  while not pq.is_empty():
+    key, u = pq.remove_min()
+    cloud[u] = key # its correct d[u] value
+    del pqlocator[u] # u is no longer in pq
+    
+    for e in g.incident_edges(u): # outgoing edges (u,v)
+      v = e.opposite(u)
+      if v not in cloud:
+        # perform relaxation step on edge (u,v)
+        wgt = e.element()
+        if d[u] + wgt < d[v]: # better path to v?
+          d[v] = d[u] + wgt # update the distance
+          pq.update(pqlocator[v], d[v], v) # update the pq entry
+          
+          
+### 최단 경로 트리 ###
+
+def shortest_path_tree(g, s, d):
+  """Reconstruct shortest-path tree rooted at vertex s, given distance map d.
+  Return tree as a map from each reachable vertex v (other than s) to the
+  edge e=(u,v) that is used to reach v from its parent u in the tree.
+  """
+  tree = {}
+  for v in d:
+    if v is not s:
+      for e in g.incident_edges(v, False): # consider INCOMING edges
+        u = e.opposite(v)
+        wgt = e.element()
+        if d[v] == d[u] + wgt:
+          tree[v] = e # edge e is used to reach v
+  return tree
+
+
+
+### 최소 신장 트리 ###
+
+from ..ch09.pq import HeapPriorityQueue,AdaptableHeapPriorityQueue
+from .partition import Partition
+
+def MST_PrimJarnik(g):
+  """Compute a minimum spanning tree of weighted graph g.
+  Return a list of edges that comprise the MST (in arbitrary order).
+  """
+  d = {} # d[v] is bound on distance to tree
+  tree = [] # list of edges in spanning tree
+  pq = AdaptableHeapPriorityQueue() # d[v] maps to value (v, e=(u,v))
+  pqlocator = {} # map from vertex to its pq locator
