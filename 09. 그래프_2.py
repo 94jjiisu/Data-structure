@@ -146,6 +146,7 @@ def shortest_path_tree(g, s, d):
 
 ### 최소 신장 트리 ###
 
+# 프림 알고리즘
 from ..ch09.pq import HeapPriorityQueue,AdaptableHeapPriorityQueue
 from .partition import Partition
 
@@ -157,3 +158,116 @@ def MST_PrimJarnik(g):
   tree = [] # list of edges in spanning tree
   pq = AdaptableHeapPriorityQueue() # d[v] maps to value (v, e=(u,v))
   pqlocator = {} # map from vertex to its pq locator
+  
+  # for each vertex v of the graph, add an entry to the priority queue, with
+  # the source having distance 0 and all others having infinite distance
+  for v in g.vertices():
+    if len(d) == 0: # this is the first node
+      d[v] = 0 # make it the root
+    else:
+      d[v] = float('inf') # positive infinity
+    pqlocator[v] = pq.add(d[v], (v,None))
+    
+  while not pq.is_empty():
+    key,value = pq.remove_min()
+    u,edge = value # unpack tuple from pq
+    del pqlocator[u] # u is no longer in pq
+    if edge is not None:
+      tree.append(edge) # add edge to tree
+    
+    for link in g.incident_edges(u):
+      v = link.opposite(u)
+      if v in pqlocator: # thus v not yet in tree
+        # see if edge (u,v) better connects v to the growing tree
+        wgt = link.element()
+        if wgt < d[v]: # better edge to v?
+          d[v] = wgt # update the distance
+          pq.update(pqlocator[v], d[v], (v, link)) # update the pq entry
+          
+          
+          
+# 크루스칼 알고리즘
+
+def MST_Kruskal(g):
+  """Compute a minimum spanning tree of a graph using Kruskal's algorithm.
+  Return a list of edges that comprise the MST.
+  The elements of the graph's edges are assumed to be weights.
+  """
+  tree = [] # list of edges in spanning tree
+  pq = HeapPriorityQueue() # entries are edges in G, with weights as key
+  forest = Partition() # keeps track of forest clusters
+  position = {} # map each node to its Partition entry
+  
+  for v in g.vertices():
+    position[v] = forest.make_group(v)
+    
+  for e in g.edges():
+    pq.add(e.element(), e) # edge's element is assumed to be its weight
+    
+  size = g.vertex_count()
+  while len(tree) != size - 1 and not pq.is_empty():
+    # tree not spanning and unprocessed edges remain
+    weight,edge = pq.remove_min()
+    u,v = edge.endpoints()
+    a = forest.find(position[u])
+    b = forest.find(position[v])
+    if a != b:
+      tree.append(edge)
+      forest.union(a,b)
+      
+  return tree
+
+
+### 파티션 ###
+
+# 포지션 클래스 
+
+class Position:
+  __slots__ = '_container', '_element', '_size', '_parent'
+  
+  def __init__(self, container, e):
+    """Create a new position that is the leader of its own group."""
+    self._container = container # reference to Partition instance
+    self._element = e
+    self._size = 1
+    self._parent = self # convention for a group leader
+    
+  def element(self):
+    """Return element stored at this position."""
+    return self._element
+  
+  
+  
+# 파티션 클래스 
+
+class Partition:
+  """Union-find structure for maintaining disjoint sets."""
+  
+  def _validate(self, p):
+    if not isinstance(p, self.Position):
+      raise TypeError('p must be proper Position type')
+    if p._container is not self:
+      raise ValueError('p does not belong to this container')
+      
+  def make_group(self, e):
+    """Makes a new group containing element e, and returns its Position."""
+    return self.Position(self, e)
+  
+  def find(self, p):
+    """Finds the group containging p and return the position of its leader."""
+    self._validate(p)
+    if p._parent != p:
+      p._parent = self.find(p._parent) # overwrite p._parent after recursion
+    return p._parent
+  
+  def union(self, p, q):
+    """Merges the groups containg elements p and q (if distinct)."""
+    a = self.find(p)
+    b = self.find(q)
+    if a is not b: # only merge if different groups
+      if a._size > b._size:
+        b._parent = a
+        a._size += b._size
+      else:
+        a._parent = b
+        b._size += a._size
